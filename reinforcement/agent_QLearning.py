@@ -19,9 +19,7 @@ class AgentQ(AbstractModel):
     or earlier if a stopping criterion is reached (here: a 100% win rate).
     """
 
-    default_check_convergence_every = (
-        5  # by default check for convergence every # episodes
-    )
+    default_check_convergence_every = 5
 
     def __init__(self, game, **kwargs):
         """Create a new prediction model for 'game'.
@@ -30,11 +28,14 @@ class AgentQ(AbstractModel):
             game (Maze): Maze game object
             kwargs: model dependent init parameters
         """
+
         super().__init__(game, name="QTableModel")
         self.Q = {}  # table with value for (state, action) combination
 
+
     def q(self, state):
         """Get q values for all actions for a certain state."""
+
         if type(state) is np.ndarray:
             state = tuple(state.flatten())
 
@@ -47,6 +48,7 @@ class AgentQ(AbstractModel):
 
         return q_aprox
 
+
     def actua(self, percepcio) -> entorn.Accio | tuple[entorn.Accio, object]:
         """Policy: choose the action with the highest value from the Q-table. Random choice if
         multiple actions have the same (max) value.
@@ -56,15 +58,16 @@ class AgentQ(AbstractModel):
         Returns:
             selected action
         """
+
         q = self.q(percepcio["POS"])
 
-        actions = np.nonzero(q == np.max(q))[
-            0
-        ]  # get index of the action(s) with the max value
+        actions = np.nonzero(q == np.max(q))[0]  # get index of the action(s) with the max value
         return random.choice(actions)
+
 
     def pinta(self, display) -> None:
         pass
+
 
     def predict(self, state):
         """ Policy: choose the action with the highest value from the Q-table.
@@ -76,12 +79,14 @@ class AgentQ(AbstractModel):
         Returns:
             Action. Selected action
         """
+
         q = self.q(state)
 
         actions = np.nonzero(q == np.max(q))[
             0
         ]  # get index of the action(s) with the max value
         return self.environment.actions[random.choice(actions)]
+
 
     def print_Q(self):
         """ Print Q table.
@@ -94,6 +99,7 @@ class AgentQ(AbstractModel):
 
         Author: Dylan Luigi Canning.
         """
+
         # Extract all unique states from the Q-table
         states = set(state for (state, action) in self.Q.keys())
 
@@ -145,8 +151,8 @@ class AgentQ(AbstractModel):
             Policy_matrix[matrix_y][matrix_x] = AgentQ._action_to_symbol(best_action)
 
         # Convert None to a placeholder (e.g., '-') for better readability
-        Q_matrix_display = np.where(Q_matrix == None, '-', Q_matrix)
-        Policy_matrix_display = np.where(Policy_matrix == None, '-', Policy_matrix)
+        Q_matrix_display = np.where(Q_matrix is None, '-', Q_matrix)
+        Policy_matrix_display = np.where(Policy_matrix is None, '-', Policy_matrix)
 
         # Print the Q-values matrix
         print("Q-Table Maximum Values (Rows: Y-axis, Columns: X-axis):")
@@ -168,6 +174,7 @@ class AgentQ(AbstractModel):
                 row_display += f"{cell:^6} "  # Center the action symbol or placeholder
             print(row_display)
 
+
     @staticmethod
     def _action_to_symbol(action):
         """
@@ -179,6 +186,7 @@ class AgentQ(AbstractModel):
         Returns:
             str: A single-character symbol representing the action.
         """
+
         action_mapping = {
             Action.MOVE_LEFT: '←',
             Action.MOVE_RIGHT: '→',
@@ -187,14 +195,9 @@ class AgentQ(AbstractModel):
         }
         return action_mapping.get(action, '?')  # '?' for undefined actions
 
-    def train(
-            self,
-            discount,
-            exploration_rate,
-            learning_rate,
-            episodes,
-            stop_at_convergence=False,
-    ):
+
+    def train(self, discount, exploration_rate, learning_rate, episodes,
+              stop_at_convergence=False, ):
         """ Train the model
 
         Args:
@@ -217,7 +220,7 @@ class AgentQ(AbstractModel):
         win_history = []
         episode = None
 
-        start_time = datetime.now()
+        #start_time = datetime.now()
 
         # training starts here
         for episode in range(1, episodes + 1):
@@ -281,4 +284,4 @@ class AgentQ(AbstractModel):
 
         logging.info("episodes: {:d}".format(episode))
 
-        return cumulative_reward_history, win_history, episode, start_time
+        return cumulative_reward_history, win_history, episode, #start_time

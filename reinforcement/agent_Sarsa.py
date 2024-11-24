@@ -19,9 +19,7 @@ class AgentSarsa(AbstractModel):
     or earlier if a stopping criterion is reached (here: a 100% win rate).
     """
 
-    default_check_convergence_every = (
-        5  # by default check for convergence every # episodes
-    )
+    default_check_convergence_every = 5
 
     def __init__(self, game, **kwargs):
         """Create a new prediction model for 'game'.
@@ -36,6 +34,7 @@ class AgentSarsa(AbstractModel):
 
     def q(self, state):
         """Get q values for all actions for a certain state."""
+
         if type(state) is np.ndarray:
             state = tuple(state.flatten())
 
@@ -146,8 +145,8 @@ class AgentSarsa(AbstractModel):
             Policy_matrix[matrix_y][matrix_x] = AgentSarsa._action_to_symbol(best_action)
 
         # Convert None to a placeholder (e.g., '-') for better readability
-        Q_matrix_display = np.where(Q_matrix == None, '-', Q_matrix)
-        Policy_matrix_display = np.where(Policy_matrix == None, '-', Policy_matrix)
+        Q_matrix_display = np.where(Q_matrix is None, '-', Q_matrix)
+        Policy_matrix_display = np.where(Policy_matrix is None, '-', Policy_matrix)
 
         # Print the Q-values matrix
         print("Q-Table Maximum Values (Rows: Y-axis, Columns: X-axis):")
@@ -190,14 +189,8 @@ class AgentSarsa(AbstractModel):
         return action_mapping.get(action, '?')  # '?' for undefined actions
 
 
-    def train(
-            self,
-            discount,
-            exploration_rate,
-            learning_rate,
-            episodes,
-            stop_at_convergence=False,
-    ):
+    def train(self, discount, exploration_rate, learning_rate, episodes,
+              stop_at_convergence=False,):
         """ Train the model
 
         Args:
@@ -220,7 +213,7 @@ class AgentSarsa(AbstractModel):
         win_history = []
         episode = None
 
-        start_time = datetime.now()
+        #start_time = datetime.now()
 
         # training starts here
         for episode in range(1, episodes + 1):
@@ -264,11 +257,10 @@ class AgentSarsa(AbstractModel):
 
             cumulative_reward_history.append(cumulative_reward)
 
-            logging.info(
-                "episode: {:d}/{:d} | status: {:4s} | e: {:.5f}".format(
-                    episode, episodes, status.name, exploration_rate
-                )
+            logging.info("episode: {:d}/{:d} | status: {:4s} | e: {:.5f}"
+                .format(episode, episodes, status.name, exploration_rate)
             )
+
         """
             if episode % self.default_check_convergence_every == 0:
                 # check if the current model does win from all starting cells
@@ -282,4 +274,4 @@ class AgentSarsa(AbstractModel):
 
         logging.info("episodes: {:d}".format(episode))
 
-        return cumulative_reward_history, win_history, episode, start_time
+        return cumulative_reward_history, win_history, episode, #start_time
