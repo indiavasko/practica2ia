@@ -1,3 +1,4 @@
+from datetime import datetime
 import logging
 import random
 
@@ -216,7 +217,7 @@ class AgentQ(AbstractModel):
         win_history = []
         episode = None
 
-        # start_time = datetime.now()
+        start_time = datetime.now()
 
         # training starts here
         for episode in range(1, episodes + 1):
@@ -268,7 +269,7 @@ class AgentQ(AbstractModel):
                 )
             )
         """
-            if episode % check_convergence_every == 0:
+            if episode % self.default_check_convergence_every == 0:
                 # check if the current model does win from all starting cells
                 # only possible if there is a finite number of starting states
                 w_all, win_rate = self.environment.check_win_all(self)
@@ -280,4 +281,4 @@ class AgentQ(AbstractModel):
 
         logging.info("episodes: {:d}".format(episode))
 
-        return cumulative_reward_history, win_history, episode
+        return cumulative_reward_history, win_history, episode, start_time

@@ -1,3 +1,4 @@
+from datetime import datetime
 import logging
 import random
 
@@ -32,6 +33,7 @@ class AgentSarsa(AbstractModel):
         super().__init__(game, name="QTableModel")
         self.Q = {}  # table with value for (state, action) combination
 
+
     def q(self, state):
         """Get q values for all actions for a certain state."""
         if type(state) is np.ndarray:
@@ -46,6 +48,7 @@ class AgentSarsa(AbstractModel):
 
         return q_aprox
 
+
     def actua(self, percepcio) -> entorn.Accio | tuple[entorn.Accio, object]:
         """Policy: choose the action with the highest value from the Q-table. Random choice if
         multiple actions have the same (max) value.
@@ -55,15 +58,15 @@ class AgentSarsa(AbstractModel):
         Returns:
             selected action
         """
-        q = self.q(percepcio["POS"])
 
-        actions = np.nonzero(q == np.max(q))[
-            0
-        ]  # get index of the action(s) with the max value
+        q = self.q(percepcio["POS"])
+        actions = np.nonzero(q == np.max(q))[0]  # get index of the action(s) with the max value
         return random.choice(actions)
+
 
     def pinta(self, display) -> None:
         pass
+
 
     def predict(self, state):
         """ Policy: choose the action with the highest value from the Q-table.
@@ -75,12 +78,11 @@ class AgentSarsa(AbstractModel):
         Returns:
             Action. Selected action
         """
-        q = self.q(state)
 
-        actions = np.nonzero(q == np.max(q))[
-            0
-        ]  # get index of the action(s) with the max value
+        q = self.q(state)
+        actions = np.nonzero(q == np.max(q))[0]  # get index of the action(s) with the max value
         return self.environment.actions[random.choice(actions)]
+
 
     def print_Q(self):
         """ Print Q table.
@@ -167,6 +169,7 @@ class AgentSarsa(AbstractModel):
                 row_display += f"{cell:^6} "  # Center the action symbol or placeholder
             print(row_display)
 
+
     @staticmethod
     def _action_to_symbol(action):
         """
@@ -185,6 +188,7 @@ class AgentSarsa(AbstractModel):
             Action.MOVE_DOWN: '↓',
         }
         return action_mapping.get(action, '?')  # '?' for undefined actions
+
 
     def train(
             self,
@@ -216,7 +220,7 @@ class AgentSarsa(AbstractModel):
         win_history = []
         episode = None
 
-        # start_time = datetime.now()
+        start_time = datetime.now()
 
         # training starts here
         for episode in range(1, episodes + 1):
@@ -229,6 +233,10 @@ class AgentSarsa(AbstractModel):
             else:
                 action = self.predict(state)
 
+            if (state, action, ) not in self.Q.keys():  # ensure value exists for (state, action)
+                # to avoid a KeyError
+                self.Q[(state, action)] = 0.0
+
             while True:
                 next_state, reward, status = self.environment._aplica(action)
                 cumulative_reward += reward
@@ -239,34 +247,20 @@ class AgentSarsa(AbstractModel):
                 else:
                     next_action = self.predict(next_state)
 
-                if (
-                        state,
-                        action,
-                ) not in self.Q.keys():  # ensure value exists for (state, action)
-                    # to avoid a KeyError
-                    self.Q[(state, action)] = 0.0
-
-                if (
-                        next_state,
-                        next_action,
-                ) not in self.Q.keys():  # ensure value exists for (state, action)
+                if (next_state, next_action, ) not in self.Q.keys():  # ensure value exists for (state, action)
                     # to avoid a KeyError
                     self.Q[(next_state, next_action)] = 0.0
 
-
                 next_Q = self.Q[(next_state, next_action)]
-                self.Q[(state, action)] = self.Q[(state, action)] + learning_rate * (
-                        reward + discount * next_Q - self.Q[(state, action)]
-                )
+                self.Q[(state, action)] = (self.Q[(state, action)] + learning_rate *
+                            (reward + discount * next_Q - self.Q[(state, action)]))
 
-                if status in (
-                        Status.WIN,
-                        Status.LOSE,
-                ):  # terminal state reached, stop episode
+                if status in (Status.WIN, Status.LOSE,):  # terminal state reached, stop episode
                     break
 
                 state = next_state
                 action = next_action
+
 
             cumulative_reward_history.append(cumulative_reward)
 
@@ -276,7 +270,7 @@ class AgentSarsa(AbstractModel):
                 )
             )
         """
-            if episode % check_convergence_every == 0:
+            if episode % self.default_check_convergence_every == 0:
                 # check if the current model does win from all starting cells
                 # only possible if there is a finite number of starting states
                 w_all, win_rate = self.environment.check_win_all(self)
@@ -288,4 +282,4 @@ class AgentSarsa(AbstractModel):
 
         logging.info("episodes: {:d}".format(episode))
 
-        return cumulative_reward_history, win_history, episode
+        return cumulative_reward_history, win_history, episode, start_time
